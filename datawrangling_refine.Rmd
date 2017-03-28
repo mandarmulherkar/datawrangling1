@@ -74,5 +74,7 @@ original_new_cols <- original_new_cols %>%
          product_tablet = as.numeric(original_new_cols$product_code == "Tablet"))
 str(original_new_cols)
 ```
-
+```{r}
+write.csv(original_new_cols, file = "refine_clean.csv")
+```
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
