@@ -135,7 +135,7 @@ $(document).ready(function () {
 library(stringr)
 library(readr)</code></pre>
 <p>Add a new chunk by clicking the <em>Insert Chunk</em> button on the toolbar or by pressing <em>Cmd+Option+I</em>.</p>
-<pre class="r"><code>original &lt;- read_csv(&quot;~/autogravity/rworkspace/refinedata/refine_original.csv&quot;)</code></pre>
+<pre class="r"><code>original &lt;- read_csv(&quot;refine_original.csv&quot;)</code></pre>
 <pre><code>## Parsed with column specification:
 ## cols(
 ##   company = col_character(),
@@ -145,180 +145,56 @@ library(readr)</code></pre>
 ##   country = col_character(),
 ##   name = col_character()
 ## )</code></pre>
-<pre class="r"><code>names(original)[names(original) == 'Product code / number'] &lt;- &quot;product_code_number&quot;</code></pre>
-<pre class="r"><code>original$company</code></pre>
-<pre><code>##  [1] &quot;Phillips&quot;   &quot;phillips&quot;   &quot;philips&quot;    &quot;phllips&quot;    &quot;phillps&quot;   
-##  [6] &quot;phillipS&quot;   &quot;akzo&quot;       &quot;Akzo&quot;       &quot;AKZO&quot;       &quot;akz0&quot;      
-## [11] &quot;ak zo&quot;      &quot;akzo&quot;       &quot;akzo&quot;       &quot;phillips&quot;   &quot;fillips&quot;   
-## [16] &quot;phlips&quot;     &quot;Van Houten&quot; &quot;van Houten&quot; &quot;van houten&quot; &quot;van houten&quot;
-## [21] &quot;Van Houten&quot; &quot;unilver&quot;    &quot;unilever&quot;   &quot;Unilever&quot;   &quot;unilever&quot;</code></pre>
-<pre class="r"><code>factor(original$company)</code></pre>
-<pre><code>##  [1] Phillips   phillips   philips    phllips    phillps    phillipS  
-##  [7] akzo       Akzo       AKZO       akz0       ak zo      akzo      
-## [13] akzo       phillips   fillips    phlips     Van Houten van Houten
-## [19] van houten van houten Van Houten unilver    unilever   Unilever  
-## [25] unilever  
-## 19 Levels: ak zo akz0 akzo Akzo AKZO fillips philips phillips ... Van Houten</code></pre>
-<pre class="r"><code>original$company &lt;- tolower(original$company)
-original$company</code></pre>
-<pre><code>##  [1] &quot;phillips&quot;   &quot;phillips&quot;   &quot;philips&quot;    &quot;phllips&quot;    &quot;phillps&quot;   
-##  [6] &quot;phillips&quot;   &quot;akzo&quot;       &quot;akzo&quot;       &quot;akzo&quot;       &quot;akz0&quot;      
-## [11] &quot;ak zo&quot;      &quot;akzo&quot;       &quot;akzo&quot;       &quot;phillips&quot;   &quot;fillips&quot;   
-## [16] &quot;phlips&quot;     &quot;van houten&quot; &quot;van houten&quot; &quot;van houten&quot; &quot;van houten&quot;
-## [21] &quot;van houten&quot; &quot;unilver&quot;    &quot;unilever&quot;   &quot;unilever&quot;   &quot;unilever&quot;</code></pre>
-<pre class="r"><code>phi_indices &lt;- grep(&quot;(ips|phi)&quot;, original$company, ignore.case = TRUE)
-phi_indices</code></pre>
-<pre><code>## [1]  1  2  3  4  5  6 14 15 16</code></pre>
-<pre class="r"><code>akzo_indices &lt;- grep(&quot;(z|ak)&quot;, original$company, ignore.case = TRUE)
-akzo_indices</code></pre>
-<pre><code>## [1]  7  8  9 10 11 12 13</code></pre>
-<pre class="r"><code>unilever_indices &lt;- grep(&quot;(uni|lev)&quot;, original$company, ignore.case = TRUE)
-unilever_indices</code></pre>
-<pre><code>## [1] 22 23 24 25</code></pre>
-<pre class="r"><code>van_indices &lt;- grep(&quot;(van|hou)&quot;, original$company, ignore.case = TRUE)
-van_indices</code></pre>
-<pre><code>## [1] 17 18 19 20 21</code></pre>
-<pre class="r"><code># Since the data set is small, and the values are well defined, a brute force approach.
-for (i in 1:length(original$company)) {
-  if (i %in% phi_indices) {
-    original$company[i] &lt;- &quot;philips&quot;
-  }
-}
+<pre class="r"><code># http://rprogramming.net/rename-columns-in-r/
+colnames(original)[colnames(original) == 'Product code / number'] &lt;- &quot;product_code_number&quot;</code></pre>
+<pre class="r"><code># Make all the names lower case in the column, use lapply.
+original$company &lt;- lapply(original$company, tolower)
 
-for (i in 1:length(original$company)) {
-  if (i %in% akzo_indices) {
-    original$company[i] &lt;- &quot;akzo&quot;
-  }
-}
+# Apply gsub to correct names for philips.
+original$company &lt;- gsub(&quot;.*(ips|phi).*&quot;, &quot;philips&quot;, original$company)
+# Apply gsub to correct names for akzo
+original$company &lt;- gsub(&quot;.*(z|ak).*&quot;, &quot;akzo&quot;, original$company)
+# Apply gsub to correct names for unilever.
+original$company &lt;- gsub(&quot;.*(uni|lev).*&quot;, &quot;unilever&quot;, original$company)
+# Apply gsub to correct names for van houten.
+original$company &lt;- gsub(&quot;.*(van|hou).*&quot;, &quot;van houten&quot;, original$company)
 
-for (i in 1:length(original$company)) {
-  if (i %in% unilever_indices) {
-    original$company[i] &lt;- &quot;unilever&quot;
-  }
-}
 # factor(original$company)
-# original</code></pre>
+# Output
+# Levels: akzo philips unilever van houten</code></pre>
 <pre class="r"><code># Separate the product code and number.
-# http://stackoverflow.com/questions/4350440/split-a-column-of-a-data-frame-to-multiple-columns
 # https://blog.rstudio.org/2014/07/22/introducing-tidyr/
 original_new_cols &lt;- original %&gt;%
-  separate(product_code_number, into = c(&quot;product_code&quot;, &quot;product_number&quot;), sep = &quot;-&quot;)
-original_new_cols</code></pre>
-<pre><code>## # A tibble: 25 × 7
-##    company product_code product_number             address   city
-## *    &lt;chr&gt;        &lt;chr&gt;          &lt;chr&gt;               &lt;chr&gt;  &lt;chr&gt;
-## 1  philips            p              5 Groningensingel 147 arnhem
-## 2  philips            p             43 Groningensingel 148 arnhem
-## 3  philips            x              3 Groningensingel 149 arnhem
-## 4  philips            x             34 Groningensingel 150 arnhem
-## 5  philips            x             12 Groningensingel 151 arnhem
-## 6  philips            p             23 Groningensingel 152 arnhem
-## 7     akzo            v             43   Leeuwardenweg 178 arnhem
-## 8     akzo            v             12   Leeuwardenweg 179 arnhem
-## 9     akzo            x              5   Leeuwardenweg 180 arnhem
-## 10    akzo            p             34   Leeuwardenweg 181 arnhem
-## # ... with 15 more rows, and 2 more variables: country &lt;chr&gt;, name &lt;chr&gt;</code></pre>
+  separate(product_code_number, into = c(&quot;product_code&quot;, &quot;product_number&quot;), sep = &quot;-&quot;)</code></pre>
 <pre class="r"><code># Add product categories
-for (i in 1:length(original_new_cols$product_code)) {
-  if (original_new_cols$product_code[i] == &quot;p&quot;) {
-    original_new_cols$product_code[i] &lt;- &quot;Smartphone&quot;
-  }
-  if (original_new_cols$product_code[i] == &quot;v&quot;) {
-    original_new_cols$product_code[i] &lt;- &quot;TV&quot;
-  }
-  if (original_new_cols$product_code[i] == &quot;x&quot;) {
-    original_new_cols$product_code[i] &lt;- &quot;Laptop&quot;
-  }
-  if (original_new_cols$product_code[i] == &quot;q&quot;) {
-    original_new_cols$product_code[i] &lt;- &quot;Tablet&quot;
-  }
-}</code></pre>
+original_new_cols$product_code &lt;- gsub(&quot;^p$&quot;, &quot;Smartphone&quot;, original_new_cols$product_code)
+original_new_cols$product_code &lt;- gsub(&quot;^v$&quot;, &quot;TV&quot;, original_new_cols$product_code)
+original_new_cols$product_code &lt;- gsub(&quot;^x$&quot;, &quot;Laptop&quot;, original_new_cols$product_code)
+original_new_cols$product_code &lt;- gsub(&quot;^q$&quot;, &quot;Tablet&quot;, original_new_cols$product_code)</code></pre>
 <pre class="r"><code>original_new_cols &lt;- original_new_cols %&gt;% unite(full_address, address, city, country, sep = &quot;,&quot;)</code></pre>
 <pre class="r"><code># Add four binary (1 or 0) columns for company: company_philips, company_akzo, company_van_houten and company_unilever.
-original_new_cols &lt;- original_new_cols %&gt;% mutate(company_philips = 0, company_akzo = 0, company_van_houten = 0, company_unilever = 0)
-original_new_cols</code></pre>
-<pre><code>## # A tibble: 25 × 9
-##    company product_code product_number
-##      &lt;chr&gt;        &lt;chr&gt;          &lt;chr&gt;
-## 1  philips   Smartphone              5
-## 2  philips   Smartphone             43
-## 3  philips       Laptop              3
-## 4  philips       Laptop             34
-## 5  philips       Laptop             12
-## 6  philips   Smartphone             23
-## 7     akzo           TV             43
-## 8     akzo           TV             12
-## 9     akzo       Laptop              5
-## 10    akzo   Smartphone             34
-## # ... with 15 more rows, and 6 more variables: full_address &lt;chr&gt;,
-## #   name &lt;chr&gt;, company_philips &lt;dbl&gt;, company_akzo &lt;dbl&gt;,
-## #   company_van_houten &lt;dbl&gt;, company_unilever &lt;dbl&gt;</code></pre>
-<pre class="r"><code>for(i in 1:length(original_new_cols$company)) {
-  if (original_new_cols$company[i] == &quot;philips&quot;) {
-    original_new_cols$company_philips[i] = 1
-  }
-  if (original_new_cols$company[i] == &quot;akzo&quot;) {
-    original_new_cols$company_akzo[i] = 1
-  }
-  if (original_new_cols$company[i] == &quot;van houten&quot;) {
-    original_new_cols$company_van_houten[i] = 1
-  }
-  if (original_new_cols$company[i] == &quot;unilever&quot;) {
-    original_new_cols$company_unilever[i] = 1
-  }
-}
-original_new_cols</code></pre>
-<pre><code>## # A tibble: 25 × 9
-##    company product_code product_number
-##      &lt;chr&gt;        &lt;chr&gt;          &lt;chr&gt;
-## 1  philips   Smartphone              5
-## 2  philips   Smartphone             43
-## 3  philips       Laptop              3
-## 4  philips       Laptop             34
-## 5  philips       Laptop             12
-## 6  philips   Smartphone             23
-## 7     akzo           TV             43
-## 8     akzo           TV             12
-## 9     akzo       Laptop              5
-## 10    akzo   Smartphone             34
-## # ... with 15 more rows, and 6 more variables: full_address &lt;chr&gt;,
-## #   name &lt;chr&gt;, company_philips &lt;dbl&gt;, company_akzo &lt;dbl&gt;,
-## #   company_van_houten &lt;dbl&gt;, company_unilever &lt;dbl&gt;</code></pre>
+original_new_cols &lt;- original_new_cols %&gt;% mutate(company_philips = as.numeric(original_new_cols$company == &quot;philips&quot;), company_akzo = as.numeric(original_new_cols$company == &quot;akzo&quot;), company_van_houten = as.numeric(original_new_cols$company == &quot;van houten&quot;), company_unilever = as.numeric(original_new_cols$company == &quot;unilever&quot;))</code></pre>
 <pre class="r"><code># Add four binary (1 or 0) columns for product category: product_smartphone, product_tv, product_laptop and product_tablet.
-original_new_cols &lt;- original_new_cols %&gt;% mutate(product_smartphone = 0, product_tv = 0, product_laptop = 0, product_tablet = 0)
-for(i in 1:length(original_new_cols$product_code)) {
-  if (original_new_cols$product_code[i] == &quot;Smartphone&quot;) {
-    original_new_cols$product_smartphone[i] = 1
-  }
-  if (original_new_cols$product_code[i] == &quot;TV&quot;) {
-    original_new_cols$product_tv[i] = 1
-  }
-  if (original_new_cols$product_code[i] == &quot;Laptop&quot;) {
-    original_new_cols$product_laptop[i] = 1
-  }
-  if (original_new_cols$product_code[i] == &quot;Tablet&quot;) {
-    original_new_cols$product_tablet[i] = 1
-  }
-}
-original_new_cols</code></pre>
-<pre><code>## # A tibble: 25 × 13
-##    company product_code product_number
-##      &lt;chr&gt;        &lt;chr&gt;          &lt;chr&gt;
-## 1  philips   Smartphone              5
-## 2  philips   Smartphone             43
-## 3  philips       Laptop              3
-## 4  philips       Laptop             34
-## 5  philips       Laptop             12
-## 6  philips   Smartphone             23
-## 7     akzo           TV             43
-## 8     akzo           TV             12
-## 9     akzo       Laptop              5
-## 10    akzo   Smartphone             34
-## # ... with 15 more rows, and 10 more variables: full_address &lt;chr&gt;,
-## #   name &lt;chr&gt;, company_philips &lt;dbl&gt;, company_akzo &lt;dbl&gt;,
-## #   company_van_houten &lt;dbl&gt;, company_unilever &lt;dbl&gt;,
-## #   product_smartphone &lt;dbl&gt;, product_tv &lt;dbl&gt;, product_laptop &lt;dbl&gt;,
-## #   product_tablet &lt;dbl&gt;</code></pre>
+original_new_cols &lt;- original_new_cols %&gt;%
+  mutate(product_smartphone = as.numeric(original_new_cols$product_code == &quot;Smartphone&quot;),
+         product_tv = as.numeric(original_new_cols$product_code == &quot;TV&quot;),
+         product_laptop = as.numeric(original_new_cols$product_code == &quot;Laptop&quot;),
+         product_tablet = as.numeric(original_new_cols$product_code == &quot;Tablet&quot;))
+str(original_new_cols)</code></pre>
+<pre><code>## Classes 'tbl_df', 'tbl' and 'data.frame':    25 obs. of  13 variables:
+##  $ company           : chr  &quot;philips&quot; &quot;philips&quot; &quot;philips&quot; &quot;philips&quot; ...
+##  $ product_code      : chr  &quot;Smartphone&quot; &quot;Smartphone&quot; &quot;Laptop&quot; &quot;Laptop&quot; ...
+##  $ product_number    : chr  &quot;5&quot; &quot;43&quot; &quot;3&quot; &quot;34&quot; ...
+##  $ full_address      : chr  &quot;Groningensingel 147,arnhem,the netherlands&quot; &quot;Groningensingel 148,arnhem,the netherlands&quot; &quot;Groningensingel 149,arnhem,the netherlands&quot; &quot;Groningensingel 150,arnhem,the netherlands&quot; ...
+##  $ name              : chr  &quot;dhr p. jansen&quot; &quot;dhr p. hansen&quot; &quot;dhr j. Gansen&quot; &quot;dhr p. mansen&quot; ...
+##  $ company_philips   : num  1 1 1 1 1 1 0 0 0 0 ...
+##  $ company_akzo      : num  0 0 0 0 0 0 1 1 1 1 ...
+##  $ company_van_houten: num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ company_unilever  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ product_smartphone: num  1 1 0 0 0 1 0 0 0 1 ...
+##  $ product_tv        : num  0 0 0 0 0 0 1 1 0 0 ...
+##  $ product_laptop    : num  0 0 1 1 1 0 0 0 1 0 ...
+##  $ product_tablet    : num  0 0 0 0 0 0 0 0 0 0 ...</code></pre>
 <p>When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the <em>Preview</em> button or press <em>Cmd+Shift+K</em> to preview the HTML file).</p>
 
 
