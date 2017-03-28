@@ -18,69 +18,42 @@ library(readr)
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 ```{r}
-original <- read_csv("~/autogravity/rworkspace/refinedata/refine_original.csv")
-names(original)[names(original) == 'Product code / number'] <- "product_code_number"
+original <- read_csv("refine_original.csv")
+# http://rprogramming.net/rename-columns-in-r/
+colnames(original)[colnames(original) == 'Product code / number'] <- "product_code_number"
 ```
+
 ```{r}
-original$company
-factor(original$company)
-original$company <- tolower(original$company)
-original$company
-phi_indices <- grep("(ips|phi)", original$company, ignore.case = TRUE)
-phi_indices
-akzo_indices <- grep("(z|ak)", original$company, ignore.case = TRUE)
-akzo_indices
-unilever_indices <- grep("(uni|lev)", original$company, ignore.case = TRUE)
-unilever_indices
-van_indices <- grep("(van|hou)", original$company, ignore.case = TRUE)
-van_indices
+# Make all the names lower case in the column, use lapply.
+original$company <- lapply(original$company, tolower)
 
-# Since the data set is small, and the values are well defined, a brute force approach.
-for (i in 1:length(original$company)) {
-  if (i %in% phi_indices) {
-    original$company[i] <- "philips"
-  }
-}
+# Apply gsub to correct names for philips.
+original$company <- gsub(".*(ips|phi).*", "philips", original$company)
+# Apply gsub to correct names for akzo
+original$company <- gsub(".*(z|ak).*", "akzo", original$company)
+# Apply gsub to correct names for unilever.
+original$company <- gsub(".*(uni|lev).*", "unilever", original$company)
+# Apply gsub to correct names for van houten.
+original$company <- gsub(".*(van|hou).*", "van houten", original$company)
 
-for (i in 1:length(original$company)) {
-  if (i %in% akzo_indices) {
-    original$company[i] <- "akzo"
-  }
-}
-
-for (i in 1:length(original$company)) {
-  if (i %in% unilever_indices) {
-    original$company[i] <- "unilever"
-  }
-}
 # factor(original$company)
-# original
+# Output
+# Levels: akzo philips unilever van houten
 ```
 
 ```{r}
 # Separate the product code and number.
-# http://stackoverflow.com/questions/4350440/split-a-column-of-a-data-frame-to-multiple-columns
 # https://blog.rstudio.org/2014/07/22/introducing-tidyr/
 original_new_cols <- original %>%
   separate(product_code_number, into = c("product_code", "product_number"), sep = "-")
-original_new_cols
 ```
+
 ```{r}
 # Add product categories
-for (i in 1:length(original_new_cols$product_code)) {
-  if (original_new_cols$product_code[i] == "p") {
-    original_new_cols$product_code[i] <- "Smartphone"
-  }
-  if (original_new_cols$product_code[i] == "v") {
-    original_new_cols$product_code[i] <- "TV"
-  }
-  if (original_new_cols$product_code[i] == "x") {
-    original_new_cols$product_code[i] <- "Laptop"
-  }
-  if (original_new_cols$product_code[i] == "q") {
-    original_new_cols$product_code[i] <- "Tablet"
-  }
-}
+original_new_cols$product_code <- gsub("^p$", "Smartphone", original_new_cols$product_code)
+original_new_cols$product_code <- gsub("^v$", "TV", original_new_cols$product_code)
+original_new_cols$product_code <- gsub("^x$", "Laptop", original_new_cols$product_code)
+original_new_cols$product_code <- gsub("^q$", "Tablet", original_new_cols$product_code)
 ```
 
 ```{r}
@@ -89,42 +62,16 @@ original_new_cols <- original_new_cols %>% unite(full_address, address, city, co
 
 ```{r}
 # Add four binary (1 or 0) columns for company: company_philips, company_akzo, company_van_houten and company_unilever.
-original_new_cols <- original_new_cols %>% mutate(company_philips = 0, company_akzo = 0, company_van_houten = 0, company_unilever = 0)
-original_new_cols
-for(i in 1:length(original_new_cols$company)) {
-  if (original_new_cols$company[i] == "philips") {
-    original_new_cols$company_philips[i] = 1
-  }
-  if (original_new_cols$company[i] == "akzo") {
-    original_new_cols$company_akzo[i] = 1
-  }
-  if (original_new_cols$company[i] == "van houten") {
-    original_new_cols$company_van_houten[i] = 1
-  }
-  if (original_new_cols$company[i] == "unilever") {
-    original_new_cols$company_unilever[i] = 1
-  }
-}
-original_new_cols
+original_new_cols <- original_new_cols %>% mutate(company_philips = as.numeric(original_new_cols$company == "philips"), company_akzo = as.numeric(original_new_cols$company == "akzo"), company_van_houten = as.numeric(original_new_cols$company == "van houten"), company_unilever = as.numeric(original_new_cols$company == "unilever"))
 ```
+
 ```{r}
 # Add four binary (1 or 0) columns for product category: product_smartphone, product_tv, product_laptop and product_tablet.
-original_new_cols <- original_new_cols %>% mutate(product_smartphone = 0, product_tv = 0, product_laptop = 0, product_tablet = 0)
-for(i in 1:length(original_new_cols$product_code)) {
-  if (original_new_cols$product_code[i] == "Smartphone") {
-    original_new_cols$product_smartphone[i] = 1
-  }
-  if (original_new_cols$product_code[i] == "TV") {
-    original_new_cols$product_tv[i] = 1
-  }
-  if (original_new_cols$product_code[i] == "Laptop") {
-    original_new_cols$product_laptop[i] = 1
-  }
-  if (original_new_cols$product_code[i] == "Tablet") {
-    original_new_cols$product_tablet[i] = 1
-  }
-}
-original_new_cols
+original_new_cols <- original_new_cols %>%
+  mutate(product_smartphone = as.numeric(original_new_cols$product_code == "Smartphone"),
+         product_tv = as.numeric(original_new_cols$product_code == "TV"),
+         product_laptop = as.numeric(original_new_cols$product_code == "Laptop"),
+         product_tablet = as.numeric(original_new_cols$product_code == "Tablet"))
 ```
 
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
